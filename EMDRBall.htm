@@ -1,0 +1,221 @@
+<!-- @format -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="EMDR Bouncing Ball" />
+    <meta name="author" content="Rob Wolfe" />
+    <title>EMDR Bouncing Ball</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      svg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        z-index: -1;
+      }
+      .controls {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1;
+        background-color: rgba(255, 255, 255, 0.5);
+        padding: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div
+      id="controls"
+      height="100%"
+      width="100%"
+      class="controls"
+      style="transform: translateX(50%)"
+    >
+      <label for="speed"
+        >Speed<input
+          type="range"
+          id="speed"
+          name="speed"
+          min="0"
+          max="50"
+          value="10"
+          step="1"
+          oninput="speedchange()"
+      /></label>
+      <label for="size"
+        >Size<input
+          type="range"
+          id="size"
+          name="size"
+          min="25"
+          max="75"
+          value="50"
+          step="5"
+          oninput="sizechange()"
+      /></label>
+
+      <label for="ball-color"
+        >Ball
+        <input
+          type="color"
+          id="ball-color"
+          name="ball-color"
+          value="#ff0000"
+          oninput="ballColorChange()"
+      /></label>
+
+      <label for="bg-color"
+        >Background
+        <input
+          type="color"
+          id="bg-color"
+          name="bg-color"
+          value="rgb(10, 82, 78)"
+          oninput="bgColorChange()"
+      /></label>
+      <input
+        type="button"
+        id="startstop"
+        value="Start"
+        onclick="startstop()"
+        style="
+          border-radius: 12px;
+          box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2),
+            0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        "
+      />
+    </div>
+    <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <pattern
+        id="diagonalHatch"
+        patternUnits="userSpaceOnUse"
+        width="4"
+        height="4"
+      >
+        <path
+          id="diagonalHatchPath"
+          d="M-1,1 l2,-2
+                 M0,4 l4,-4
+                 M3,5 l2,-2"
+          stroke="rgb(10, 82, 78)"
+          stroke-width="1.5"
+        />
+      </pattern>
+      <rect width="100%" height="100%" fill="url(#diagonalHatch)" />
+      <circle id="thecircle" cx="50" cy="50" r="50" fill="#ff0000" />
+    </svg>
+
+    <script>
+      var timer = null;
+      var direction = 1;
+      var stopping = false;
+      const defaultDistance = 7; // distance per tick
+      const defaultDelay = 10; // Timer tick in ms - 16 is about 60 fps
+      var distance = defaultDistance;
+      var animateDelay = defaultDelay;
+
+      window.onresize = setsvgsize;
+
+      document.querySelector("svg").onclick = startstop;
+
+      window.onload = setsvgsize;
+
+      function ballColorChange() {
+        document
+          .getElementById("thecircle")
+          .setAttribute("fill", document.getElementById("ball-color").value);
+      }
+      function bgColorChange() {
+        document
+          .getElementById("diagonalHatchPath")
+          .setAttribute("stroke", document.getElementById("bg-color").value);
+      }
+
+      function sizechange() {
+        document
+          .getElementById("thecircle")
+          .setAttribute("r", document.getElementById("size").value);
+      }
+
+      function speedchange() {
+        distance = parseInt(document.getElementById("speed").value);
+      }
+
+      function setsvgsize() {
+        var svg = document.querySelector("svg");
+        svg.setAttribute("width", window.innerWidth);
+        svg.setAttribute("height", window.innerHeight);
+        document
+          .getElementById("thecircle")
+          .setAttribute("cy", window.innerHeight / 2);
+      }
+
+      function startstop() {
+        if (timer == null) {
+          start();
+        } else {
+          stop();
+        }
+      }
+
+      function start() {
+        document.getElementById("startstop").value = "Stop";
+        stopping = false;
+        distance = parseInt(document.getElementById("speed").value);
+
+        if (timer == null) {
+          timer = setInterval(animate, animateDelay);
+        }
+      }
+
+      function stop() {
+        document.getElementById("startstop").value = "Start";
+        stopping = true;
+      }
+
+      function animate() {
+        var circle = document.getElementById("thecircle");
+        var cx = parseInt(circle.getAttribute("cx"));
+        var nextCx = cx;
+
+        if (stopping) {
+          if (distance >= 1) {
+            distance *= 0.97;
+          } else {
+            clearInterval(timer);
+            timer = null;
+            stopping = false;
+          }
+        }
+
+        var nextCx = cx + direction * distance;
+
+        if (
+          // If the ball hits the right wall
+          nextCx >
+          window.innerWidth - document.getElementById("size").value
+        ) {
+          direction *= -1;
+          nextCx = window.innerWidth - document.getElementById("size").value;
+        } else if (nextCx < document.getElementById("size").value) {
+          // If the ball hits the left wall
+          direction *= -1;
+          nextCx = parseInt(document.getElementById("size").value);
+        }
+        circle.setAttribute("cx", nextCx.toString());
+      }
+    </script>
+  </body>
+</html>
